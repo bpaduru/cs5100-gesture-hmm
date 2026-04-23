@@ -60,7 +60,7 @@ def train_one_hmm(train_seqs, n_states, n_iter):
         n_components=n_states,
         # diagonal covariance means we assume the 38 features are independent
         # this reduces parameters from 38*38=1444 per state to just 38 per state
-        # with only 32 training sequences (640 frames) full covariance would overfit
+        # with only 64 training sequences (1280 frames) full covariance would overfit
         covariance_type="diag",
         n_iter=n_iter,
         tol=1e-4,
@@ -128,7 +128,6 @@ print(f"sequence length: {seqs[0].shape[0]} frames")
 print(f"gesture order: {GESTURE_NAMES}\n")
 
 # 80/20 split per gesture class to keep class balance in both sets
-# with 40 sequences per gesture: 32 for training, 8 for testing
 train_seqs, test_seqs   = [], []
 train_labels, test_labels = [], []
 
