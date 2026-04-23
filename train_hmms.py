@@ -128,6 +128,7 @@ print(f"sequence length: {seqs[0].shape[0]} frames")
 print(f"gesture order: {GESTURE_NAMES}\n")
 
 # 80/20 split per gesture class to keep class balance in both sets
+# with 80 sequences per gesture: 64 for training, 16 for testing
 train_seqs, test_seqs   = [], []
 train_labels, test_labels = [], []
 
