@@ -1,166 +1,173 @@
-CS5100 Capstone - HMM Hand Gesture Recognition
-Northeastern University, Spring 2026
+# CS5100 Capstone — HMM Hand Gesture Recognition
+**Northeastern University, Spring 2026**  
 Based on Rabiner 1989 HMM Tutorial
 
-================================================================
-PROJECT OVERVIEW
-================================================================
+---
 
-This project applies Hidden Markov Models to real-time hand gesture
-recognition using a webcam. Six gestures control a Pac-Man game.
-The HMM is trained using Baum-Welch and classifies using the Forward
-algorithm. Two baselines are implemented for comparison: DTW nearest
-neighbor (Sakoe and Chiba 1978) and a rule-based geometric classifier.
+## Project Overview
 
-Gestures:
-  thumbs up    -> move up
-  point right  -> move right
-  point left   -> move left
-  thumbs down  -> move down
-  peace sign   -> pause game (hold about 1.5 seconds)
-  open palm    -> reset position
+This project applies Hidden Markov Models to real-time hand gesture recognition using a webcam. Six gestures control a Pac-Man game. The HMM is trained using Baum-Welch and classifies using the Forward algorithm. Two baselines are implemented for comparison: DTW nearest neighbor (Sakoe and Chiba 1978) and a rule-based geometric classifier.
 
-================================================================
-FILES IN THIS PROJECT
-================================================================
+| Gesture | Action |
+|---|---|
+| Thumbs up | Move up |
+| Point right | Move right |
+| Point left | Move left |
+| Thumbs down | Move down |
+| Peace sign | Pause game (hold about 1.5 seconds) |
+| Open palm | Reset position |
 
-collect_gestures.py   - records webcam gesture data using MediaPipe
-features.py           - converts raw landmarks to 38-dim feature vectors
-train_hmms.py         - trains 6 GaussianHMMs using Baum-Welch via hmmlearn
-forward_algorithm.py  - implements Forward algorithm from scratch (no library)
-demo.py               - live Pac-Man game controlled by gesture recognition
-dtw_baseline.py       - DTW 1-nearest-neighbor baseline (Sakoe and Chiba 1978)
-mediapipe_baseline.py - rule-based geometric classifier baseline
-run_experiments.py    - runs all three systems and prints full results
-analysis.py           - loads saved results and prints detailed analysis
-compare_systems.py    - generates comparison bar charts
-weather_verify.py     - verifies Forward algorithm against Rabiner ice cream example
-latency.py            - measures HMM inference latency in milliseconds
+---
 
-================================================================
-HOW TO RUN - COMPLETE PIPELINE IN ORDER
-================================================================
+## Files in This Project
 
-step 1: collect gesture data (run on your laptop with webcam)
-  python collect_gestures.py
-  press 1-6 to record each gesture, q to quit
-  target: 80 recordings per gesture, 6 gestures = 480 total
+| File | Description |
+|---|---|
+| `collect_gestures.py` | Records webcam gesture data using MediaPipe |
+| `features.py` | Converts raw landmarks to 38-dim feature vectors |
+| `train_hmms.py` | Trains 6 GaussianHMMs using Baum-Welch via hmmlearn |
+| `forward_algorithm.py` | Implements Forward algorithm from scratch (no library) |
+| `demo.py` | Live Pac-Man game controlled by gesture recognition |
+| `dtw_baseline.py` | DTW 1-nearest-neighbor baseline (Sakoe and Chiba 1978) |
+| `mediapipe_baseline.py` | Rule-based geometric classifier baseline |
+| `run_experiments.py` | Runs all three systems and prints full results |
+| `analysis.py` | Loads saved results and prints detailed analysis |
+| `compare_systems.py` | Generates comparison bar charts |
+| `weather_verify.py` | Verifies Forward algorithm against Rabiner ice cream example |
+| `latency.py` | Measures HMM inference latency in milliseconds |
 
-step 2: extract features
-  python features.py
-  input:  gesture_data_raw/ folder
-  output: sequences.npy, labels.npy, feature_distributions.png
+Output charts are in the `outputs/` folder.
 
-step 3: verify the HMM math (optional but recommended)
-  python weather_verify.py
-  confirms hmmlearn Forward algorithm matches brute force
-  expected output: P(O given model) = 1.536e-4 from both methods
+---
 
-step 4: train the HMM models
-  python train_hmms.py
-  input:  sequences.npy, labels.npy
-  output: hmm_models.pkl, hmm_predictions.npy,
-          hmm_cm.png, convergence.png, n_states_sweep.png
+## How to Run — Complete Pipeline in Order
 
-step 5: run DTW baseline
-  python dtw_baseline.py
-  input:  sequences.npy, labels.npy
-  output: dtw_predictions.npy, dtw_accuracy.npy, dtw_cm.png
-  note:   this takes several minutes
+**Install dependencies first:**
+```
+pip install mediapipe hmmlearn opencv-python numpy matplotlib scikit-learn tslearn
+```
 
-step 6: run rule-based baseline
-  python mediapipe_baseline.py
-  input:  gesture_data_raw/ folder
-  output: mp_predictions.npy, mp_labels.npy, mp_cm.png
+**Step 1 — Collect gesture data**
+```
+python collect_gestures.py
+```
+Press 1 to 6 to record each gesture, q to quit. Target: 80 recordings per gesture, 6 gestures = 480 total.
 
-step 7: run our Forward algorithm from scratch
-  python forward_algorithm.py
-  input:  hmm_models.pkl, sequences.npy, labels.npy
-  output: printed verification and per-gesture accuracy
+**Step 2 — Extract features**
+```
+python features.py
+```
+Input: gesture_data_raw/ folder. Output: sequences.npy, labels.npy, feature_distributions.png
 
-step 8: see all results and analysis
-  python run_experiments.py    runs everything fresh
-  python analysis.py           loads saved results and explains them
+**Step 3 — Verify the HMM math**
+```
+python weather_verify.py
+```
+Expected output: P(O given model) = 1.536e-4 from both brute force and Forward algorithm.
 
-step 9: generate comparison charts
-  python compare_systems.py
-  output: comparison.png
+**Step 4 — Train the HMM models**
+```
+python train_hmms.py
+```
+Output: hmm_models.pkl, hmm_cm.png, convergence.png, n_states_sweep.png
 
-step 10: run live demo
-  python demo.py
-  needs: hmm_models.pkl, hand_landmarker.task
+**Step 5 — Run DTW baseline**
+```
+python dtw_baseline.py
+```
+Note: this takes several minutes.
 
-================================================================
-KEY DESIGN DECISIONS AND WHY
-================================================================
+**Step 6 — Run rule-based baseline**
+```
+python mediapipe_baseline.py
+```
 
-feature representation (38 dimensions per frame):
-  - 15 joint bend angles using dot product geometry and arccos
-  - 4 finger spread angles between adjacent fingers
-  - 19 velocity features as frame-to-frame angle differences
-  - angles used instead of raw coordinates because angles do not
-    change when the hand moves position in the frame
+**Step 7 — Run Forward algorithm from scratch**
+```
+python forward_algorithm.py
+```
+Prints verification that our implementation matches hmmlearn exactly.
 
-HMM architecture:
-  - one GaussianHMM per gesture = 6 models total
-  - left right topology: states advance only forward in time
-    matching how a gesture physically unfolds
-  - diagonal Gaussian: assumes 38 features are independent
-    reduces parameters from 38x38=1444 to 38 per state
-    prevents overfitting given the dataset size
-  - 6 hidden states: matches expected gesture phases
-  - 10 random restarts: Baum-Welch finds local not global optima
-  - confidence margin threshold of 5: gap between best and
-    second-best log-likelihood must exceed 5 before acting
+**Step 8 — See all results**
+```
+python run_experiments.py
+python analysis.py
+```
 
-classification:
-  - Forward algorithm computes log P(O given lambda) per model
-  - argmax over 6 models gives the predicted gesture
-  - Viterbi not used because we only need which gesture,
-    not the hidden state sequence
+**Step 9 — Generate comparison charts**
+```
+python compare_systems.py
+```
 
-================================================================
-DATASET
-================================================================
+**Step 10 — Run live demo**
+```
+python demo.py
+```
+Needs: hmm_models.pkl, hand_landmarker.task
 
-  recordings per gesture : 80
-  total gestures         : 6
-  total sequences        : 480
-  frames per sequence    : 20
-  train per gesture      : 64  (80 percent split)
-  test per gesture       : 16  (20 percent split)
-  total test sequences   : 96
+---
 
-================================================================
-RESULTS SUMMARY
-================================================================
+## Key Design Decisions and Why
 
-  HMM accuracy   : 99.0%  (95 of 96 test samples correct)
-  DTW accuracy   : 94.8%  (91 of 96 test samples correct)
-  Rule-based     : 67.7%  (fails especially on down and left)
+**Feature representation (38 dimensions per frame)**
+- 15 joint bend angles using dot product geometry and arccos
+- 4 finger spread angles between adjacent fingers
+- 19 velocity features as frame-to-frame angle differences
+- Angles used instead of raw coordinates because angles do not change when the hand moves in the frame
 
-  HMM inference time : under 1ms per classification (30 plus FPS)
-  DTW inference time : several minutes for full test set
+**HMM architecture**
+- One GaussianHMM per gesture = 6 models total
+- Left right topology: states advance only forward in time matching how a gesture physically unfolds
+- Diagonal Gaussian: reduces parameters from 38x38=1444 to 38 per state, prevents overfitting
+- 6 hidden states: matches expected gesture phases
+- 10 random restarts: Baum-Welch finds local not global optima
+- Confidence margin threshold of 5: gap between best and second-best log-likelihood must exceed 5 before acting
 
-================================================================
-KNOWN LIMITATIONS
-================================================================
+**Classification**
+- Forward algorithm computes log P(O given lambda) per model
+- Argmax over 6 models gives the predicted gesture
+- Viterbi not used because we only need which gesture, not the hidden state sequence
 
-  - data collected by one person only, not tested across users
-  - angle features are translation invariant but not fully
-    rotation invariant, tilting hand changes values
-  - no rejection class for when no gesture is being made
-  - left and right are mirror gestures sharing similar angles,
-    distinguished mainly by velocity direction
+---
 
-================================================================
-REFERENCES
-================================================================
+## Dataset
 
-  Rabiner, L.R. (1989). A Tutorial on Hidden Markov Models and
-  Selected Applications in Speech Recognition. Proceedings of
-  the IEEE, 77(2), 257-286.
+| Property | Value |
+|---|---|
+| Recordings per gesture | 80 |
+| Total gestures | 6 |
+| Total sequences | 480 |
+| Frames per sequence | 20 |
+| Train per gesture | 64 (80 percent) |
+| Test per gesture | 16 (20 percent) |
+| Total test sequences | 96 |
 
-  Sakoe, H. and Chiba, S. (1978). Dynamic programming algorithm
-  optimization for spoken word recognition. IEEE Transactions on
-  Acoustics, Speech, and Signal Processing, 26(1), 43-49.
+---
+
+## Results Summary
+
+| System | Accuracy | Errors |
+|---|---|---|
+| HMM (Gaussian, left right, Baum-Welch) | 99.0% | 1 of 96 |
+| DTW 1-NN (Sakoe and Chiba 1978) | 94.8% | 5 of 96 |
+| Rule-based geometric classifier | 67.7% | approx. 31 of 96 |
+
+HMM inference time: under 1ms per classification at 30 plus FPS  
+DTW inference time: several minutes for full test set
+
+---
+
+## Known Limitations
+
+- Data collected by one person only, not tested across users
+- Angle features are translation invariant but not fully rotation invariant
+- No rejection class for when no gesture is being made
+- Left and right are mirror gestures distinguished mainly by velocity direction
+
+---
+
+## References
+
+Rabiner, L.R. (1989). A Tutorial on Hidden Markov Models and Selected Applications in Speech Recognition. Proceedings of the IEEE, 77(2), 257-286.
+
+Sakoe, H. and Chiba, S. (1978). Dynamic programming algorithm optimization for spoken word recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing, 26(1), 43-49.

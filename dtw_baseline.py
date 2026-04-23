@@ -39,7 +39,7 @@ def dtw_classify(test_seq, train_seqs, train_labels):
 
 
 print(f"running DTW 1-NN on {len(test_seqs)} test sequences...")
-print("this takes a few minutes since it compares each test to all 192 training sequences")
+print("this takes a few minutes since it compares each test to all 384 training sequences")
 t0 = time.time()
 dtw_preds = []
 for i, ts in enumerate(test_seqs):
